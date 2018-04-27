@@ -58,6 +58,7 @@ wayland_protocol_codegen {
 // header files
 cc_library_static {
     name: "libwayland_extension_client_protocols",
+    vendor_available: true,
     cflags: [
         "-Wall",
         "-Wextra",

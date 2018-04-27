@@ -14,5 +14,6 @@
 
 cc_library_headers {
     name: "wayland_flinger_headers",
+    vendor_available: true,
     export_include_dirs: ["."],
 }
