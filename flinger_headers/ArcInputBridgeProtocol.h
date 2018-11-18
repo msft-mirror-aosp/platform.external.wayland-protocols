@@ -80,7 +80,11 @@ enum class InputEventType {
     SWITCH,
 
     // event for reporting dimensions and properties of the display
-    DISPLAY_METRICS
+    DISPLAY_METRICS,
+
+    KEY_CHARACTER_MAP_CLEAR,
+    KEY_CHARACTER_MAP_ENTRY,
+    KEY_CHARACTER_MAP_COMMIT
 } __attribute__((packed));
 
 struct PointerArgs {
@@ -166,6 +170,15 @@ struct DisplayMetricsArgs {
     float ui_scale;
 } __attribute__((packed));
 
+struct KeyCharacterMapEntryArgs {
+    uint32_t keyCode;
+    uint32_t base;
+    uint32_t shift;
+    uint32_t capslock;
+    uint32_t ralt;
+    uint32_t shift_ralt;
+    uint32_t capslock_ralt;
+} __attribute__((packed));
 
 // Union-like class describing an event. The InputEventType describes which
 // of member of the union contains the data of this event.
@@ -188,6 +201,7 @@ struct BridgeInputEvent {
         GamepadArgs gamepad;
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
+        KeyCharacterMapEntryArgs key_character_map_entry;
     };
 
     static BridgeInputEvent ResetEvent(uint64_t timestamp) {
