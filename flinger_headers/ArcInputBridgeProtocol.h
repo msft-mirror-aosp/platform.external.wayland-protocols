@@ -40,6 +40,7 @@ enum class InputEventType {
 
     POINTER_ENTER,
     POINTER_MOVE,
+    POINTER_MOVE_RELATIVE,
     POINTER_LEAVE,
     POINTER_BUTTON,
     POINTER_SCROLL_X,
@@ -180,6 +181,11 @@ struct KeyCharacterMapEntryArgs {
     uint32_t capslock_ralt;
 } __attribute__((packed));
 
+struct RelativePointerArgs {
+    float dx;
+    float dy;
+} __attribute__((packed));
+
 // Union-like class describing an event. The InputEventType describes which
 // of member of the union contains the data of this event.
 struct BridgeInputEvent {
@@ -202,6 +208,7 @@ struct BridgeInputEvent {
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
         KeyCharacterMapEntryArgs key_character_map_entry;
+        RelativePointerArgs relativePointer;
     };
 
     static BridgeInputEvent ResetEvent(uint64_t timestamp) {
