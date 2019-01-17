@@ -85,7 +85,8 @@ enum class InputEventType {
 
     KEY_CHARACTER_MAP_CLEAR,
     KEY_CHARACTER_MAP_ENTRY,
-    KEY_CHARACTER_MAP_COMMIT
+    KEY_CHARACTER_MAP_COMMIT,
+    KEY_CHARACTER_MAP_NAME,
 } __attribute__((packed));
 
 struct PointerArgs {
@@ -181,6 +182,13 @@ struct KeyCharacterMapEntryArgs {
     uint32_t capslock_ralt;
 } __attribute__((packed));
 
+struct KeyCharacterMapNameArgs {
+  // XKB layout name. The longest one we have is "us(workman-intl)" (16
+  // characters) so it should be sufficient. KCM converter will also check the
+  // name doesn't exceed the limit at build time.
+  char name[32];
+} __attribute__((packed));
+
 struct RelativePointerArgs {
     float dx;
     float dy;
@@ -208,6 +216,7 @@ struct BridgeInputEvent {
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
         KeyCharacterMapEntryArgs key_character_map_entry;
+        KeyCharacterMapNameArgs key_character_map_name;
         RelativePointerArgs relativePointer;
     };
 
