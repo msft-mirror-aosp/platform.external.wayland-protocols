@@ -83,9 +83,6 @@ enum class InputEventType {
     // event for reporting dimensions and properties of the display
     DISPLAY_METRICS,
 
-    KEY_CHARACTER_MAP_CLEAR,
-    KEY_CHARACTER_MAP_ENTRY,
-    KEY_CHARACTER_MAP_COMMIT,
     KEY_CHARACTER_MAP_NAME,
 } __attribute__((packed));
 
@@ -96,8 +93,6 @@ struct PointerArgs {
 } __attribute__((packed));
 
 struct KeyArgs {
-    // Android AKEYCODE_ code after application of keyboard layout.
-    uint32_t keyCode;
     // Linux KEY_ scan code as it was received from the kernel.
     uint32_t scanCode;
     // 0 = released, 1 = pressed.
@@ -172,16 +167,6 @@ struct DisplayMetricsArgs {
     float ui_scale;
 } __attribute__((packed));
 
-struct KeyCharacterMapEntryArgs {
-    uint32_t keyCode;
-    uint32_t base;
-    uint32_t shift;
-    uint32_t capslock;
-    uint32_t ralt;
-    uint32_t shift_ralt;
-    uint32_t capslock_ralt;
-} __attribute__((packed));
-
 struct KeyCharacterMapNameArgs {
   // XKB layout name. The longest one we have is "us(workman-intl)" (16
   // characters) so it should be sufficient. KCM converter will also check the
@@ -215,7 +200,6 @@ struct BridgeInputEvent {
         GamepadArgs gamepad;
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
-        KeyCharacterMapEntryArgs key_character_map_entry;
         KeyCharacterMapNameArgs key_character_map_name;
         RelativePointerArgs relativePointer;
     };
@@ -224,10 +208,10 @@ struct BridgeInputEvent {
         return {timestamp, -1, 0, InputEventType::RESET, {}};
     }
 
-    static BridgeInputEvent KeyEvent(uint64_t timestamp, uint32_t keyCode, uint32_t scanCode,
+    static BridgeInputEvent KeyEvent(uint64_t timestamp, uint32_t scanCode,
                                      uint32_t state, uint32_t serial) {
         BridgeInputEvent event{timestamp, -1, 0, InputEventType::KEY, {}};
-        event.key = {keyCode, scanCode, state, serial};
+        event.key = {scanCode, state, serial};
         return event;
     }
 
