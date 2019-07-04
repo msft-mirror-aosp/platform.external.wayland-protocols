@@ -143,6 +143,15 @@ struct GestureSwipeArgs {
     float dy;
 } __attribute__((packed));
 
+struct GamepadDeviceInfoArgs {
+    int32_t id;
+    char name[256];
+    uint16_t bustype;
+    uint16_t vendorId;
+    uint16_t productId;
+    uint16_t version;
+} __attribute__((packed));
+
 struct GamepadArgs {
     int32_t id;
     union {
@@ -196,6 +205,7 @@ struct BridgeInputEvent {
         GestureArgs gesture;
         GesturePinchArgs gesture_pinch;
         GestureSwipeArgs gesture_swipe;
+        GamepadDeviceInfoArgs gamepad_device_info;
         GamepadArgs gamepad;
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
