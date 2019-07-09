@@ -73,6 +73,8 @@ enum class InputEventType {
 
     GAMEPAD_CONNECTED,
     GAMEPAD_DISCONNECTED,
+    GAMEPAD_AXIS_INFO,
+    GAMEPAD_ACTIVATED,
     GAMEPAD_AXIS,
     GAMEPAD_BUTTON,
     GAMEPAD_FRAME,
@@ -152,6 +154,18 @@ struct GamepadDeviceInfoArgs {
     uint16_t version;
 } __attribute__((packed));
 
+struct GamepadAxisInfoArgs {
+    int32_t id;
+    // evdev ABS_CNT axis index.
+    uint32_t index;
+    // For the definition of the variables below, see input_absinfo.
+    int32_t minValue;
+    int32_t maxValue;
+    int32_t flat;
+    int32_t fuzz;
+    int32_t resolution;
+} __attribute__((packed));
+
 struct GamepadArgs {
     int32_t id;
     union {
@@ -206,6 +220,7 @@ struct BridgeInputEvent {
         GesturePinchArgs gesture_pinch;
         GestureSwipeArgs gesture_swipe;
         GamepadDeviceInfoArgs gamepad_device_info;
+        GamepadAxisInfoArgs gamepad_axis_info;
         GamepadArgs gamepad;
         SwitchArgs switches;
         DisplayMetricsArgs display_metrics;
