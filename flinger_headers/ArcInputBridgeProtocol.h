@@ -88,6 +88,21 @@ enum class InputEventType {
     KEY_CHARACTER_MAP_NAME,
 } __attribute__((packed));
 
+enum class DisplayIdentifierType {
+    NONE = 0,
+
+    DISPLAY_ID,
+    PHYSICAL_PORT,
+} __attribute__((packed));
+
+struct DisplayIdentifier {
+    DisplayIdentifierType type;
+    union {
+        int32_t displayId;
+        uint8_t port;
+    };
+} __attribute__((packed));
+
 struct PointerArgs {
     float x;
     float y;
@@ -206,9 +221,8 @@ struct RelativePointerArgs {
 // of member of the union contains the data of this event.
 struct BridgeInputEvent {
     uint64_t timestamp;
-    int32_t displayId;
-
     InputEventType type;
+    DisplayIdentifier displayIdentifier;
 
     union {
         PointerArgs pointer;
@@ -228,86 +242,99 @@ struct BridgeInputEvent {
         RelativePointerArgs relativePointer;
     };
 
+    static BridgeInputEvent From(uint64_t timestamp, InputEventType type) {
+        return From(timestamp, type,  {DisplayIdentifierType::NONE, {-1}});
+    }
+
+    static BridgeInputEvent From(uint64_t timestamp, InputEventType type, int32_t displayId) {
+        return From(timestamp, type,  {DisplayIdentifierType::DISPLAY_ID, {displayId}});
+    }
+
+    static BridgeInputEvent From(uint64_t timestamp, InputEventType type,
+                                 DisplayIdentifier displayIdentifier) {
+        return {timestamp, type, displayIdentifier, {}};
+    }
+
     static BridgeInputEvent ResetEvent(uint64_t timestamp) {
-        return {timestamp, -1, InputEventType::RESET, {}};
+        return From(timestamp, InputEventType::RESET);
     }
 
     static BridgeInputEvent KeyEvent(uint64_t timestamp, uint32_t scanCode,
                                      uint32_t state, uint32_t serial) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::KEY, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::KEY);
         event.key = {scanCode, state, serial};
         return event;
     }
 
     static BridgeInputEvent KeyModifiersEvent(uint64_t timestamp, uint32_t modifiers) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::KEY_MODIFIERS, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::KEY_MODIFIERS);
         event.meta = {modifiers};
         return event;
     }
 
     static BridgeInputEvent PointerEvent(uint64_t timestamp, InputEventType type, float x = 0,
                                          float y = 0, bool discrete = false) {
-        BridgeInputEvent event{timestamp, -1, type, {}};
+        BridgeInputEvent event = From(timestamp, type);
         event.pointer = {x, y, discrete};
         return event;
     }
 
     static BridgeInputEvent PointerButtonEvent(uint64_t timestamp, uint32_t code, uint32_t state) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::POINTER_BUTTON, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::POINTER_BUTTON);
         event.button = {code, state};
         return event;
     }
 
     static BridgeInputEvent PinchBeginEvent(uint64_t timestamp) {
-        return {timestamp, -1, InputEventType::GESTURE_PINCH_BEGIN, {}};
+        return From(timestamp, InputEventType::GESTURE_PINCH_BEGIN);
     }
 
     static BridgeInputEvent PinchUpdateEvent(uint64_t timestamp, float scale) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GESTURE_PINCH_UPDATE, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GESTURE_PINCH_UPDATE);
         event.gesture_pinch.scale = scale;
         return event;
     }
 
     static BridgeInputEvent PinchEndEvent(uint64_t timestamp, bool cancelled) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GESTURE_PINCH_END, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GESTURE_PINCH_END);
         event.gesture.cancelled = cancelled;
         return event;
     }
 
     static BridgeInputEvent SwipeBeginEvent(uint64_t timestamp, uint32_t fingers) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GESTURE_SWIPE_BEGIN, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GESTURE_SWIPE_BEGIN);
         event.gesture.fingers = fingers;
         return event;
     }
 
     static BridgeInputEvent SwipeUpdateEvent(uint64_t timestamp, float dx, float dy) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GESTURE_SWIPE_UPDATE, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GESTURE_SWIPE_UPDATE);
         event.gesture_swipe.dx = dx;
         event.gesture_swipe.dy = dy;
         return event;
     }
 
     static BridgeInputEvent SwipeEndEvent(uint64_t timestamp, bool cancelled) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GESTURE_SWIPE_END, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GESTURE_SWIPE_END);
         event.gesture.cancelled = cancelled;
         return event;
     }
 
     static BridgeInputEvent GamepadConnectedEvent(int32_t id) {
-        BridgeInputEvent event{0, -1, InputEventType::GAMEPAD_CONNECTED, {}};
+        BridgeInputEvent event = From(0, InputEventType::GAMEPAD_CONNECTED);
         event.gamepad.id = id;
         return event;
     }
 
     static BridgeInputEvent GamepadDisconnectedEvent(int32_t id) {
-        BridgeInputEvent event{0, -1, InputEventType::GAMEPAD_DISCONNECTED, {}};
+        BridgeInputEvent event = From(0, InputEventType::GAMEPAD_DISCONNECTED);
         event.gamepad.id = id;
         return event;
     }
 
     static BridgeInputEvent GamepadAxisEvent(uint64_t timestamp, int32_t id, int32_t axis,
                                              float value) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GAMEPAD_AXIS, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GAMEPAD_AXIS);
         event.gamepad.id = id;
         event.gamepad.axis = axis;
         event.gamepad.value = value;
@@ -316,7 +343,7 @@ struct BridgeInputEvent {
 
     static BridgeInputEvent GamepadButtonEvent(uint64_t timestamp, int32_t id, int32_t button,
                                                bool pressed, float value) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GAMEPAD_BUTTON, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GAMEPAD_BUTTON);
         event.gamepad.id = id;
         event.gamepad.button = button;
         event.gamepad.pressed = pressed;
@@ -325,13 +352,13 @@ struct BridgeInputEvent {
     }
 
     static BridgeInputEvent GamepadFrameEvent(uint64_t timestamp, int32_t id) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::GAMEPAD_FRAME, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::GAMEPAD_FRAME);
         event.gamepad.id = id;
         return event;
     }
 
     static BridgeInputEvent SwitchEvent(uint64_t timestamp, int32_t switchCode, int32_t state) {
-        BridgeInputEvent event{timestamp, -1, InputEventType::SWITCH, {}};
+        BridgeInputEvent event = From(timestamp, InputEventType::SWITCH);
         event.switches.switchCode = switchCode;
         event.switches.state = state;
         return event;
