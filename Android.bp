@@ -73,7 +73,7 @@ cc_library_static {
         "-Wextra",
         "-Werror",
         "-g",
-        "-fvisibility=hidden"
+        "-fvisibility=hidden",
     ],
     static_libs: ["libwayland_client"],
     generated_sources: ["wayland_extension_protocol_sources"],
@@ -92,7 +92,7 @@ cc_library_static {
         "-Wextra",
         "-Werror",
         "-g",
-        "-fvisibility=hidden"
+        "-fvisibility=hidden",
     ],
     static_libs: ["libwayland_server"],
     generated_sources: ["wayland_extension_protocol_sources"],
