@@ -75,7 +75,7 @@ cc_library_static {
         "-g",
         "-fvisibility=hidden",
     ],
-    static_libs: ["libwayland_client"],
+    static_libs: ["libwayland_client_static"],
     generated_sources: ["wayland_extension_protocol_sources"],
     generated_headers: ["wayland_extension_client_protocol_headers"],
     export_generated_headers: ["wayland_extension_client_protocol_headers"],
