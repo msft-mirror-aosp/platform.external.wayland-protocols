@@ -62,6 +62,10 @@ filegroup {
         "freedesktop.org/**/*.xml",
         "chromium.org/**/*.xml",
     ],
+    exclude_srcs: [
+        // Conflicts with freedesktop.org/stable/xdg-shell/xdg-shell.xml
+        "freedesktop.org/unstable/xdg-shell/xdg-shell-unstable-v5.xml",
+    ]
 }
 
 // Generate protocol source files used by both client and server
