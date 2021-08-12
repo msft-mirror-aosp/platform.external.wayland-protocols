@@ -12,37 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Build and use the "wayland_protocol_codegen" extension.
 package {
-    default_applicable_licenses: ["external_wayland-protocols_license"],
+    default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-// Added automatically by a large-scale-change that took the approach of
-// 'apply every license found to every target'. While this makes sure we respect
-// every license restriction, it may not be entirely correct.
-//
-// e.g. GPL in an MIT project might only apply to the contrib/ directory.
-//
-// Please consider splitting the single license below into multiple licenses,
-// taking care not to lose any license_kind information, and overriding the
-// default license using the 'licenses: [...]' property on targets as needed.
-//
-// For unused files, consider creating a 'fileGroup' with "//visibility:private"
-// to attach the license to, and including a comment whether the files may be
-// used in the current project.
-// See: http://go/android-license-faq
 license {
-    name: "external_wayland-protocols_license",
-    visibility: [":__subpackages__"],
+    name: "external_wayland-protocols_freedesktop.org-MIT-license",
     license_kinds: [
-        "SPDX-license-identifier-Apache-2.0",
         "SPDX-license-identifier-MIT",
     ],
-    // large-scale-change unable to identify any license_text files
+    license_text: ["freedesktop.org/COPYING"],
 }
 
+license {
+    name: "external_wayland-protocols_freedesktop.org-ISC-license",
+    license_kinds: [
+        "SPDX-license-identifier-ISC",
+    ],
+    license_text: ["ISC_LICENSE.txt"],
+}
+
+license {
+    name: "external_wayland-protocols_chromium.org-license",
+    license_kinds: [
+        "SPDX-license-identifier-MIT",
+    ],
+    license_text: ["chromium.org/LICENSE"],
+}
+
+// Build and use the "wayland_protocol_codegen" extension. This is just a bit
+// of glue code to invoke the wayland-scanner code generation tool provided by
+// the core Wayland code (external/wayland) from the Android build system.
 bootstrap_go_package {
     name: "soong-wayland-protocol-codegen",
+    // licenses: ["Android-Apache-2.0"],
     pkgPath: "android/soong/external/wayland-protocol",
     deps: [
         "blueprint",
@@ -56,16 +59,65 @@ bootstrap_go_package {
     pluginFor: ["soong_build"],
 }
 
+// All the MIT licensed freedesktop.org defined extension protocols.
+filegroup {
+    name: "freedesktop.org-MIT-wayland_extension_protocols",
+    licenses: ["external_wayland-protocols_freedesktop.org-MIT-license"],
+    srcs: [
+        "./freedesktop.org/stable/presentation-time/presentation-time.xml",
+        "./freedesktop.org/stable/viewporter/viewporter.xml",
+        "./freedesktop.org/stable/xdg-shell/xdg-shell.xml",
+        "./freedesktop.org/unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml",
+        "./freedesktop.org/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml",
+        "./freedesktop.org/unstable/input-method/input-method-unstable-v1.xml",
+        "./freedesktop.org/unstable/input-timestamps/input-timestamps-unstable-v1.xml",
+        "./freedesktop.org/unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml",
+        "./freedesktop.org/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml",
+        "./freedesktop.org/unstable/linux-explicit-synchronization/linux-explicit-synchronization-unstable-v1.xml",
+        "./freedesktop.org/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml",
+        "./freedesktop.org/unstable/pointer-gestures/pointer-gestures-unstable-v1.xml",
+        "./freedesktop.org/unstable/primary-selection/primary-selection-unstable-v1.xml",
+        "./freedesktop.org/unstable/relative-pointer/relative-pointer-unstable-v1.xml",
+        "./freedesktop.org/unstable/tablet/tablet-unstable-v1.xml",
+        "./freedesktop.org/unstable/tablet/tablet-unstable-v2.xml",
+        "./freedesktop.org/unstable/text-input/text-input-unstable-v1.xml",
+        "./freedesktop.org/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml",
+        "./freedesktop.org/unstable/xdg-foreign/xdg-foreign-unstable-v1.xml",
+        "./freedesktop.org/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml",
+        "./freedesktop.org/unstable/xdg-output/xdg-output-unstable-v1.xml",
+        // Note: Conflicts with freedesktop.org/stable/xdg-shell/xdg-shell.xml
+        // "./freedesktop.org/unstable/xdg-shell/xdg-shell-unstable-v5.xml",
+        "./freedesktop.org/unstable/xdg-shell/xdg-shell-unstable-v6.xml",
+        "./freedesktop.org/unstable/xwayland-keyboard-grab/xwayland-keyboard-grab-unstable-v1.xml",
+    ],
+}
+
+// All the ISC licensed freedesktop.org defined extension protocols.
+filegroup {
+    name: "freedesktop.org-ISC-wayland_extension_protocols",
+    licenses: ["external_wayland-protocols_freedesktop.org-ISC-license"],
+    srcs: [
+        "./freedesktop.org/unstable/text-input/text-input-unstable-v3.xml",
+    ],
+}
+
+// All the chromium.org defined extension protocols.
+filegroup {
+    name: "chromium.org-wayland_extension_protocols",
+    licenses: ["external_wayland-protocols_chromium.org-license"],
+    srcs: [
+        "chromium.org/**/*.xml",
+    ],
+}
+
+// Allows for easy reference to all the extension protocols.
 filegroup {
     name: "wayland_extension_protocols",
     srcs: [
-        "freedesktop.org/**/*.xml",
-        "chromium.org/**/*.xml",
+        ":freedesktop.org-MIT-wayland_extension_protocols",
+        ":freedesktop.org-ISC-wayland_extension_protocols",
+        ":chromium.org-wayland_extension_protocols",
     ],
-    exclude_srcs: [
-        // Conflicts with freedesktop.org/stable/xdg-shell/xdg-shell.xml
-        "freedesktop.org/unstable/xdg-shell/xdg-shell-unstable-v5.xml",
-    ]
 }
 
 // Generate protocol source files used by both client and server
@@ -131,5 +183,3 @@ cc_library_static {
     generated_headers: ["wayland_extension_server_protocol_headers"],
     export_generated_headers: ["wayland_extension_server_protocol_headers"],
 }
-
-subdirs = ["flinger_headers"]
