@@ -5,7 +5,6 @@ if [ "x$SCANNER" = "x" ] ; then
 	exit 77
 fi
 
-$SCANNER client-header --strict $1 /dev/null
-$SCANNER server-header --strict $1 /dev/null
-$SCANNER private-code --strict $1 /dev/null
-$SCANNER public-code --strict $1 /dev/null
+$SCANNER client-header $1 /dev/null
+$SCANNER server-header $1 /dev/null
+$SCANNER code $1 /dev/null

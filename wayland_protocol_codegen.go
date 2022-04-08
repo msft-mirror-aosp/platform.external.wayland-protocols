@@ -286,6 +286,8 @@ func (g *waylandGenModule) prepareTools(ctx android.ModuleContext) (tools map[st
 				} else {
 					ctx.ModuleErrorf("host tool %q missing output file", tool)
 				}
+			default:
+				ctx.ModuleErrorf("unknown dependency on %q", ctx.OtherModuleName(module))
 			}
 		})
 	}
