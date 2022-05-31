@@ -24,7 +24,7 @@
     DEALINGS IN THE SOFTWARE.
   </copyright>
 
-  <interface name="zcr_gaming_input_v2" version="2">
+  <interface name="zcr_gaming_input_v2" version="3">
     <description summary="extends wl_seat with gaming input devices">
       A global interface to provide gaming input devices for a given seat.
 
