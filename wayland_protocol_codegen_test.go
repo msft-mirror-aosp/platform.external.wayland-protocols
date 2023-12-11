@@ -408,31 +408,6 @@ func TestWaylandCodeGen(t *testing.T) {
 	}
 }
 
-func TestGenruleWithBazel(t *testing.T) {
-	bp := `
-	    wayland_protocol_codegen {
-				name: "mixed_codegen",
-				srcs: ["src_file"],
-				bazel_module: { label: "//example:bazel_codegen" },
-		}
-	`
-
-	result := android.GroupFixturePreparers(
-		prepareForCodeGenTest, android.FixtureModifyConfig(func(config android.Config) {
-			config.BazelContext = android.MockBazelContext{
-				OutputBaseDir: "outputbase",
-				LabelToOutputFiles: map[string][]string{
-					"//example:bazel_codegen": {"bazelone.txt", "bazeltwo.txt"}}}
-		})).RunTestWithBp(t, testCodeGenBp()+bp)
-
-	gen := result.Module("mixed_codegen", "").(*Module)
-
-	expectedOutputFiles := []string{"outputbase/execroot/__main__/bazelone.txt",
-		"outputbase/execroot/__main__/bazeltwo.txt"}
-	android.AssertDeepEquals(t, "output files", expectedOutputFiles, gen.outputFiles.Strings())
-	android.AssertDeepEquals(t, "output deps", expectedOutputFiles, gen.outputDeps.Strings())
-}
-
 func TestDefaults(t *testing.T) {
 	bp := `
 		wayland_protocol_codegen_defaults {
