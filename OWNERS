@@ -1,9 +1,14 @@
-# Default code reviewers picked from top 3 or more developers.
-# Please update this list if you find better candidates.
-domlaskowski@google.com
+# General
 lpique@google.com
-xutan@google.com
-oshima@google.com
+
+# Chromium protocols
 yhanada@google.com
-linben@google.com
-edcourtney@google.com
+takise@google.com
+oshima@google.com
+
+# Unfamiliar
+alanding@google.com #{LAST_RESORT_SUGGESTION}
+xutan@google.com #{LAST_RESORT_SUGGESTION}
+
+# Allow Soong team to make build changes
+per-file bazel/*,Android.bp,*.go,go.mod,go.work,go.work.sum = file:platform/build/soong:/OWNERS #{LAST_RESORT_SUGGESTION}
