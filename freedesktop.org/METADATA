@@ -1,4 +1,4 @@
-name: "wayland-protocol"
+name: "freedesktop.org.wayland-protocols"
 description:
     "wayland-protocols contains Wayland protocols that add functionality not "
     "available in the Wayland core protocol. Such protocols either add "
