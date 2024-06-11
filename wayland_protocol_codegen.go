@@ -26,12 +26,6 @@ package, which was originally used for inspiration for this one, and has
 been recently restructured so that it can be kept in sync with a tool like
 "vimdiff" to keep things in sync as needed.
 
-However this build system plugin will not be needed in the future, as
-evidenced by some of the other files that have been added as part of the
-last big sync-up. In the future, Android will be built with Bazel, and it
-is much simpler there to define our own local version of "gensrcs" that
-implements the functionality we need See bazel/gensrcs.bzl for it.
-
 Notable differences:
 
   - This package implements a more powerful template mechanism for specifying
@@ -82,10 +76,7 @@ import (
 	"github.com/google/blueprint/proptools"
 
 	"android/soong/android"
-	"android/soong/bazel"
-	"android/soong/bazel/cquery"
 	"android/soong/genrule"
-	"path/filepath"
 )
 
 func init() {
@@ -188,7 +179,6 @@ type generatorProperties struct {
 type Module struct {
 	android.ModuleBase
 	android.DefaultableModuleBase
-	android.BazelModuleBase
 	android.ApexModuleBase
 
 	android.ImageInterface
@@ -210,9 +200,6 @@ type Module struct {
 	// Collect the module directory for IDE info in java/jdeps.go.
 	modulePaths []string
 }
-
-// Ensure Module implements the android.MixedBuildBuildable interface.
-var _ android.MixedBuildBuildable = (*Module)(nil)
 
 type taskFunc func(ctx android.ModuleContext, rawCommand string, srcFiles android.Paths) []generateTask
 
@@ -252,30 +239,11 @@ func (g *Module) GeneratedDeps() android.Paths {
 	return g.outputDeps
 }
 
-// Part of android.OutputFileProducer.
-// Returns the list of output files matching a tag, or an error if there is no
-// match.
-func (g *Module) OutputFiles(tag string) (android.Paths, error) {
-	if tag == "" {
-		return append(android.Paths{}, g.outputFiles...), nil
-	}
-	// otherwise, tag should match one of outputs
-	for _, outputFile := range g.outputFiles {
-		if outputFile.Rel() == tag {
-			return android.Paths{outputFile}, nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported module reference tag %q", tag)
-}
-
 // Ensure Module implements the genrule.SourceFileGenerator interface.
 var _ genrule.SourceFileGenerator = (*Module)(nil)
 
 // Ensure Module implements the android.SourceFileProducer interface.
 var _ android.SourceFileProducer = (*Module)(nil)
-
-// Ensure Module implements the android.OutputFileProducer interface.
-var _ android.OutputFileProducer = (*Module)(nil)
 
 func toolDepsMutator(ctx android.BottomUpMutatorContext) {
 	if g, ok := ctx.Module().(*Module); ok {
@@ -286,41 +254,6 @@ func toolDepsMutator(ctx android.BottomUpMutatorContext) {
 			}
 			ctx.AddFarVariationDependencies(ctx.Config().BuildOSTarget.Variations(), tag, tool)
 		}
-	}
-}
-
-// Part of android.MixedBuildBuildable.
-// Allow this module to be a bridge between Bazel and Soong. Fills in Soong
-// properties for the module from the Bazel cquery, so that other Soong
-// modules can depend on the module when it was actually built by Bazel.
-func (g *Module) ProcessBazelQueryResponse(ctx android.ModuleContext) {
-	g.generateCommonBuildActions(ctx)
-
-	// Get the list of output files that Bazel generates for the target.
-	label := g.GetBazelLabel(ctx, g)
-	bazelCtx := ctx.Config().BazelContext
-	filePaths, err := bazelCtx.GetOutputFiles(label, android.GetConfigKey(ctx))
-	if err != nil {
-		ctx.ModuleErrorf(err.Error())
-		return
-	}
-
-	// Convert to android.Paths, and also form the set of include directories
-	// that might be needed for those paths.
-	var bazelOutputFiles android.Paths
-	exportIncludeDirs := map[string]bool{}
-	for _, bazelOutputFile := range filePaths {
-		bazelOutputFiles = append(bazelOutputFiles,
-			android.PathForBazelOutRelative(ctx, ctx.ModuleDir(), bazelOutputFile))
-		exportIncludeDirs[filepath.Dir(bazelOutputFile)] = true
-	}
-
-	// Set the Soong module properties to refer to the Bazel files
-	g.outputFiles = bazelOutputFiles
-	g.outputDeps = bazelOutputFiles
-	for includePath, _ := range exportIncludeDirs {
-		g.exportedIncludeDirs = append(g.exportedIncludeDirs,
-			android.PathForBazelOut(ctx, includePath))
 	}
 }
 
@@ -376,7 +309,7 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 				case android.HostToolProvider:
 					// A HostToolProvider provides the path to a tool, which will be copied
 					// into the sandbox.
-					if !t.(android.Module).Enabled() {
+					if !t.(android.Module).Enabled(ctx) {
 						if ctx.Config().AllowMissingDependencies() {
 							ctx.AddMissingDependencies([]string{tool})
 						} else {
@@ -639,20 +572,19 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		})
 		g.outputDeps = android.Paths{phonyFile}
 	}
+
+	g.setOutputFiles(ctx)
 }
 
-// Part of android.MixedBuildBuildable.
-// Queues up Bazel cquery requests related to this module.
-func (g *Module) QueueBazelCall(ctx android.BaseModuleContext) {
-	bazelCtx := ctx.Config().BazelContext
-	bazelCtx.QueueBazelRequest(g.GetBazelLabel(ctx, g), cquery.GetOutputFiles,
-		android.GetConfigKey(ctx))
-}
-
-// Part of android.MixedBuildBuildable.
-// Returns true if Bazel can and should build this module in a mixed build.
-func (g *Module) IsMixedBuildSupported(ctx android.BaseModuleContext) bool {
-	return true
+func (g *Module) setOutputFiles(ctx android.ModuleContext) {
+	if len(g.outputFiles) == 0 {
+		return
+	}
+	ctx.SetOutputFiles(g.outputFiles, "")
+	// non-empty-string-tag should match one of the outputs
+	for _, files := range g.outputFiles {
+		ctx.SetOutputFiles(android.Paths{files}, files.Rel())
+	}
 }
 
 // Part of android.IDEInfo.
@@ -823,7 +755,6 @@ func newCodegen() *Module {
 func codegenFactory() android.Module {
 	m := newCodegen()
 	android.InitAndroidModule(m)
-	android.InitBazelModule(m)
 	android.InitDefaultableModule(m)
 	return m
 }
@@ -908,108 +839,6 @@ func removeExtension(path string) string {
 		return path[:dot]
 	}
 	return path
-}
-
-// The attributes for the custom local ./bazel/gensrcs.bzl. See the .bzl file
-// for attribute documentation.
-type bazelGensrcsAttributes struct {
-	Srcs   bazel.LabelListAttribute
-	Output string
-	Tools  bazel.LabelListAttribute
-	Cmd    string
-}
-
-// ConvertWithBp2build converts a Soong module -> Bazel target.
-func (m *Module) ConvertWithBp2build(ctx android.TopDownMutatorContext) {
-	// Bazel only has the "tools" attribute.
-	tools_prop := android.BazelLabelForModuleDeps(ctx, m.properties.Tools)
-	tool_files_prop := android.BazelLabelForModuleSrc(ctx, m.properties.Tool_files)
-	tools_prop.Append(tool_files_prop)
-
-	tools := bazel.MakeLabelListAttribute(tools_prop)
-	srcs := bazel.LabelListAttribute{}
-	srcs_labels := bazel.LabelList{}
-	srcs_labels = android.BazelLabelForModuleSrcExcludes(
-		ctx, m.properties.Srcs, m.properties.Exclude_srcs)
-	srcs = bazel.MakeLabelListAttribute(srcs_labels)
-
-	var allReplacements bazel.LabelList
-	allReplacements.Append(tools.Value)
-	allReplacements.Append(bazel.FirstUniqueBazelLabelList(srcs_labels))
-
-	// Convert the command line template.
-	var cmd string
-	if m.properties.Cmd != nil {
-		// $(in) becomes $(SRC) in our custom gensrcs.bzl
-		cmd = strings.ReplaceAll(*m.properties.Cmd, "$(in)", "$(SRC)")
-		// $(out) becomes $(OUT) in our custom gensrcs.bzl
-		cmd = strings.ReplaceAll(cmd, "$(out)", "$(OUT)")
-		// $(gendir) becomes $(RULEDIR) in our custom gensrcs.bzl
-		cmd = strings.Replace(cmd, "$(genDir)", "$(RULEDIR)", -1)
-
-		// $(location) or $(locations) becomes the more explicit
-		// $(location <default-tool-label>) in Bazel.
-		if len(tools.Value.Includes) > 0 {
-			cmd = strings.Replace(cmd, "$(location)",
-				fmt.Sprintf("$(location %s)", tools.Value.Includes[0].Label), -1)
-			cmd = strings.Replace(cmd, "$(locations)",
-				fmt.Sprintf("$(locations %s)", tools.Value.Includes[0].Label), -1)
-		}
-
-		// Translate all the other $(location <name>) and $(locations <name>)
-		// expansion placeholders.
-		for _, l := range allReplacements.Includes {
-			bpLoc := fmt.Sprintf("$(location %s)", l.OriginalModuleName)
-			bpLocs := fmt.Sprintf("$(locations %s)", l.OriginalModuleName)
-			bazelLoc := fmt.Sprintf("$(location %s)", l.Label)
-			bazelLocs := fmt.Sprintf("$(locations %s)", l.Label)
-			cmd = strings.Replace(cmd, bpLoc, bazelLoc, -1)
-			cmd = strings.Replace(cmd, bpLocs, bazelLocs, -1)
-		}
-	}
-
-	tags := android.ApexAvailableTags(m)
-
-	// The Output_extension prop is not in an immediately accessible field
-	// in the Module struct, so use GetProperties and cast it
-	// to the known struct prop.
-	var outputFileTemplate string
-	for _, propIntf := range m.GetProperties() {
-		if props, ok := propIntf.(*codegenProperties); ok {
-			// Convert the output path template.
-			outputFileTemplate = proptools.String(props.Output)
-			if len(outputFileTemplate) > 0 {
-				outputFileTemplate = strings.Replace(
-					outputFileTemplate, "$(in)", "$(SRC:BASE)", -1)
-				outputFileTemplate = strings.Replace(
-					outputFileTemplate, "$(in:path/base.ext)", "$(SRC:PATH/BASE.EXT)", -1)
-				outputFileTemplate = strings.Replace(
-					outputFileTemplate, "$(in:path/base)", "$(SRC:PATH/BASE)", -1)
-				outputFileTemplate = strings.Replace(
-					outputFileTemplate, "$(in:base.ext)", "$(SRC:BASE.EXT)", -1)
-				outputFileTemplate = strings.Replace(
-					outputFileTemplate, "$(in:base)", "$(SRC:BASE)", -1)
-			} else {
-				outputFileTemplate = proptools.String(props.Prefix) + "$(SRC:BASE)" +
-					proptools.String(props.Suffix)
-			}
-			break
-		}
-	}
-	props := bazel.BazelTargetModuleProperties{
-		Rule_class:        "gensrcs",
-		Bzl_load_location: "//external/wayland-protocols/bazel:gensrcs.bzl",
-	}
-	attrs := &bazelGensrcsAttributes{
-		Srcs:   srcs,
-		Output: outputFileTemplate,
-		Cmd:    cmd,
-		Tools:  tools,
-	}
-	ctx.CreateBazelTargetModule(props, android.CommonAttributes{
-		Name: m.Name(),
-		Tags: tags,
-	}, attrs)
 }
 
 // Defaults module.
