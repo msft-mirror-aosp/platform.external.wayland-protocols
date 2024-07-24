@@ -239,30 +239,11 @@ func (g *Module) GeneratedDeps() android.Paths {
 	return g.outputDeps
 }
 
-// Part of android.OutputFileProducer.
-// Returns the list of output files matching a tag, or an error if there is no
-// match.
-func (g *Module) OutputFiles(tag string) (android.Paths, error) {
-	if tag == "" {
-		return append(android.Paths{}, g.outputFiles...), nil
-	}
-	// otherwise, tag should match one of outputs
-	for _, outputFile := range g.outputFiles {
-		if outputFile.Rel() == tag {
-			return android.Paths{outputFile}, nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported module reference tag %q", tag)
-}
-
 // Ensure Module implements the genrule.SourceFileGenerator interface.
 var _ genrule.SourceFileGenerator = (*Module)(nil)
 
 // Ensure Module implements the android.SourceFileProducer interface.
 var _ android.SourceFileProducer = (*Module)(nil)
-
-// Ensure Module implements the android.OutputFileProducer interface.
-var _ android.OutputFileProducer = (*Module)(nil)
 
 func toolDepsMutator(ctx android.BottomUpMutatorContext) {
 	if g, ok := ctx.Module().(*Module); ok {
@@ -328,7 +309,7 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 				case android.HostToolProvider:
 					// A HostToolProvider provides the path to a tool, which will be copied
 					// into the sandbox.
-					if !t.(android.Module).Enabled() {
+					if !t.(android.Module).Enabled(ctx) {
 						if ctx.Config().AllowMissingDependencies() {
 							ctx.AddMissingDependencies([]string{tool})
 						} else {
@@ -591,6 +572,19 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		})
 		g.outputDeps = android.Paths{phonyFile}
 	}
+
+	g.setOutputFiles(ctx)
+}
+
+func (g *Module) setOutputFiles(ctx android.ModuleContext) {
+	if len(g.outputFiles) == 0 {
+		return
+	}
+	ctx.SetOutputFiles(g.outputFiles, "")
+	// non-empty-string-tag should match one of the outputs
+	for _, files := range g.outputFiles {
+		ctx.SetOutputFiles(android.Paths{files}, files.Rel())
+	}
 }
 
 // Part of android.IDEInfo.
@@ -634,13 +628,15 @@ func generatorFactory(taskGenerator taskFunc, props ...interface{}) *Module {
 type noopImageInterface struct{}
 
 func (x noopImageInterface) ImageMutatorBegin(android.BaseModuleContext)                 {}
+func (x noopImageInterface) VendorVariantNeeded(android.BaseModuleContext) bool          { return false }
+func (x noopImageInterface) ProductVariantNeeded(android.BaseModuleContext) bool         { return false }
 func (x noopImageInterface) CoreVariantNeeded(android.BaseModuleContext) bool            { return false }
 func (x noopImageInterface) RamdiskVariantNeeded(android.BaseModuleContext) bool         { return false }
 func (x noopImageInterface) VendorRamdiskVariantNeeded(android.BaseModuleContext) bool   { return false }
 func (x noopImageInterface) DebugRamdiskVariantNeeded(android.BaseModuleContext) bool    { return false }
 func (x noopImageInterface) RecoveryVariantNeeded(android.BaseModuleContext) bool        { return false }
 func (x noopImageInterface) ExtraImageVariations(ctx android.BaseModuleContext) []string { return nil }
-func (x noopImageInterface) SetImageVariation(ctx android.BaseModuleContext, variation string, module android.Module) {
+func (x noopImageInterface) SetImageVariation(ctx android.BaseModuleContext, variation string) {
 }
 
 // Constructs a Module for handling the code generation.
