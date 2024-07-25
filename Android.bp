@@ -113,12 +113,41 @@ filegroup {
     ],
 }
 
-// All the chromium.org defined extension protocols.
+// All the BSD licensed chromium.org defined extension protocols.
 filegroup {
     name: "chromium.org-wayland_extension_protocols",
     licenses: ["external_wayland-protocols-BSD-license"],
     srcs: [
-        "chromium.org/**/*.xml",
+        "./chromium.org/components/exo/wayland/protocol/aura-output-management.xml",
+        "./chromium.org/components/exo/wayland/protocol/aura-shell.xml",
+        "./chromium.org/components/exo/wayland/protocol/chrome-color-management.xml",
+        "./chromium.org/components/exo/wayland/protocol/overlay-prioritizer.xml",
+        "./chromium.org/components/exo/wayland/protocol/surface-augmenter.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/alpha-compositing/alpha-compositing-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/cursor-shapes/cursor-shapes-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/extended-drag/extended-drag-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/gaming-input/gaming-input-unstable-v2.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/keyboard/keyboard-configuration-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/keyboard/keyboard-extension-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/notification-shell/notification-shell-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/remote-shell/remote-shell-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/remote-shell/remote-shell-unstable-v2.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/secure-output/secure-output-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/stylus-tools/stylus-tools-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/stylus/stylus-unstable-v2.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/text-input/text-input-extension-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/touchpad-haptics/touchpad-haptics-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/ui-controls/ui-controls-unstable-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/vsync-feedback/vsync-feedback-unstable-v1.xml",
+    ],
+}
+
+filegroup {
+    name: "chromium.org-MIT-wayland_extension_protocols",
+    licenses: ["external_wayland-protocols-MIT-license"],
+    srcs: [
+        "./chromium.org/third_party/wayland-protocols/unstable/content-type/content-type-v1.xml",
+        "./chromium.org/third_party/wayland-protocols/unstable/gtk-primary-selection/gtk-primary-selection.xml",
     ],
 }
 
@@ -130,6 +159,7 @@ filegroup {
         ":freedesktop.org-MIT-wayland_extension_protocols",
         ":freedesktop.org-ISC-wayland_extension_protocols",
         ":chromium.org-wayland_extension_protocols",
+        ":chromium.org-MIT-wayland_extension_protocols",
     ],
 }
 
