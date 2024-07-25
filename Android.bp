@@ -17,15 +17,15 @@ package {
 }
 
 license {
-    name: "external_wayland-protocols_freedesktop.org-MIT-license",
+    name: "external_wayland-protocols-MIT-license",
     license_kinds: [
         "SPDX-license-identifier-MIT",
     ],
-    license_text: ["freedesktop.org/COPYING"],
+    license_text: ["MIT_LICENSE.txt"],
 }
 
 license {
-    name: "external_wayland-protocols_freedesktop.org-ISC-license",
+    name: "external_wayland-protocols-ISC-license",
     license_kinds: [
         "SPDX-license-identifier-ISC",
     ],
@@ -33,11 +33,11 @@ license {
 }
 
 license {
-    name: "external_wayland-protocols_chromium.org-license",
+    name: "external_wayland-protocols-BSD-license",
     license_kinds: [
-        "SPDX-license-identifier-MIT",
+        "SPDX-license-identifier-BSD",
     ],
-    license_text: ["chromium.org/LICENSE"],
+    license_text: ["BSD_LICENSE.txt"],
 }
 
 // Build and use the "wayland_protocol_codegen" extension. This is just a bit
@@ -64,11 +64,13 @@ bootstrap_go_package {
 // All the MIT licensed freedesktop.org defined extension protocols.
 filegroup {
     name: "freedesktop.org-MIT-wayland_extension_protocols",
-    licenses: ["external_wayland-protocols_freedesktop.org-MIT-license"],
+    licenses: ["external_wayland-protocols-MIT-license"],
     srcs: [
         "./freedesktop.org/stable/presentation-time/presentation-time.xml",
         "./freedesktop.org/stable/viewporter/viewporter.xml",
         "./freedesktop.org/stable/xdg-shell/xdg-shell.xml",
+        "./freedesktop.org/staging/drm-lease/drm-lease-v1.xml",
+        "./freedesktop.org/staging/xdg-activation/xdg-activation-v1.xml",
         "./freedesktop.org/unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml",
         "./freedesktop.org/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml",
         "./freedesktop.org/unstable/input-method/input-method-unstable-v1.xml",
@@ -97,16 +99,24 @@ filegroup {
 // All the ISC licensed freedesktop.org defined extension protocols.
 filegroup {
     name: "freedesktop.org-ISC-wayland_extension_protocols",
-    licenses: ["external_wayland-protocols_freedesktop.org-ISC-license"],
+    licenses: ["external_wayland-protocols-ISC-license"],
     srcs: [
         "./freedesktop.org/unstable/text-input/text-input-unstable-v3.xml",
+    ],
+}
+
+// All the BSD licensed freedesktop.org defined extension protocols.
+filegroup {
+    name: "freedesktop.org-BSD-wayland_extension_protocols",
+    licenses: ["external_wayland-protocols-BSD-license"],
+    srcs: [
     ],
 }
 
 // All the chromium.org defined extension protocols.
 filegroup {
     name: "chromium.org-wayland_extension_protocols",
-    licenses: ["external_wayland-protocols_chromium.org-license"],
+    licenses: ["external_wayland-protocols-BSD-license"],
     srcs: [
         "chromium.org/**/*.xml",
     ],
@@ -116,6 +126,7 @@ filegroup {
 filegroup {
     name: "wayland_extension_protocols",
     srcs: [
+        ":freedesktop.org-BSD-wayland_extension_protocols",
         ":freedesktop.org-MIT-wayland_extension_protocols",
         ":freedesktop.org-ISC-wayland_extension_protocols",
         ":chromium.org-wayland_extension_protocols",

@@ -1,26 +1,16 @@
-These instructions are for the Android external/wayland-protcools repository.
-
 ## Updating from upstream
 
-### Update the freedesktop.org/ directory
+### Update the freedesktop.org/ subdirectory
 
-  1. Checkout the upstream sources to a working directory if you haven't
-     already with
-     `git clone git://anongit.freedesktop.org/wayland/wayland-protocols`,
-     or otherwise pull down the latest changes if you have a checkout.
-  2. Sync to the desired release tag (`git tag -l` to view them)
-     `git checkout $TAG`
-  3. The freedesktop.org/ directory here should be a simple copy of this
-     checkout. A tool such as `meld` can be used to view and apply the
-     differences.
-     `meld freedesktop.org/ /path/to/freedesktop.org/wayland-protocols/`
-  4. Note that we add NOTICE, MODULE_LICENSE_MIT and METADATA files as part of
-     our policies around open source code. Leave these alone unless there is
-     a reason to change them.
-       * NOTICE should duplicate COPYING from upstream.
-       * MODULE_LICENSE_MIT should match the source code license.
-       * METADATA should indicate the version of the upstream source used, and
-         should be updated to match.
+1) Run import_snapshot.py freedesktop.org $VERSION
+
+```sh
+# Determine the actual version you want from gitlab.freedesktop.org/wayland/wayland-protocols
+cd path/to/external/wayland-protocols
+./import_snapshot.py freedesktop.org 1.32
+```
+
+2) Modify the top-level Android.bp to reference any new .xml protocol files.
 
 ### Update the chromium.org/ directory
 
