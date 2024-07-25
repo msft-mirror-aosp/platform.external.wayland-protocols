@@ -31,24 +31,43 @@ stable_protocols =								\
 	stable/xdg-shell/xdg-shell.xml						\
 	$(NULL)
 
+staging_protocols =								\
+	staging/drm-lease/drm-lease-v1.xml					\
+	staging/xdg-activation/xdg-activation-v1.xml				\
+	$(NULL)
+
+misc_documentation =								\
+	staging/xdg-activation/x11-interoperation.rst				\
+	$(NULL)
+
 nobase_dist_pkgdata_DATA =							\
 	$(unstable_protocols)							\
 	$(stable_protocols)							\
+	$(staging_protocols)							\
 	$(NULL)
 
 dist_noinst_DATA =								\
 	$(sort $(foreach p,$(unstable_protocols),$(dir $p)README))		\
 	$(sort $(foreach p,$(stable_protocols),$(dir $p)README))		\
+	$(sort $(foreach p,$(staging_protocols),$(dir $p)README))		\
+	$(misc_documentation)							\
 	README.md								\
 	GOVERNANCE.md								\
 	MEMBERS.md								\
+	meson.build								\
+	meson_options.txt							\
+	tests/meson.build							\
+	tests/build-cxx.cc.in							\
+	tests/build-pedantic.c.in						\
+	tests/replace.py							\
+	tests/scan.sh								\
 	$(NULL)
 
 noarch_pkgconfig_DATA = wayland-protocols.pc
 
 dist_check_SCRIPTS = tests/scan.sh
 
-TESTS = $(unstable_protocols) $(stable_protocols)
+TESTS = $(unstable_protocols) $(stable_protocols) $(staging_protocols)
 TEST_EXTENSIONS = .xml
 AM_TESTS_ENVIRONMENT = SCANNER='$(wayland_scanner)'; export SCANNER;
 XML_LOG_COMPILER = $(srcdir)/tests/scan.sh

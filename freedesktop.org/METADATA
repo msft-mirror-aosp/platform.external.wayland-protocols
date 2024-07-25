@@ -11,7 +11,7 @@ third_party {
     type: GIT
     value: "https://gitlab.freedesktop.org/wayland/wayland-protocols.git"
   }
-  version: "d10d18f3d49374d2e3eb96d63511f32795aab5f7"
-  last_upgrade_date { year: 2020 month: 03 day: 17 }
+  version: "1.22"
+  last_upgrade_date { year: 2024 month: 7 day: 23 }
   license_type: NOTICE
 }
