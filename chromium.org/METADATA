@@ -9,7 +9,7 @@ third_party {
     type: GIT
     value: "https://chromium.googlesource.com/chromium/src.git/+/main/components/exo/wayland/protocol"
   }
-  version: "97f4417444a6d90d4501b4e878745d6bdf5d49dc"
-  last_upgrade_date { year: 2017 month: 11 day: 29 }
+  version: "126.0.6457.1"
+  last_upgrade_date { year: 2024 month: 7 day: 23 }
   license_type: NOTICE
 }
