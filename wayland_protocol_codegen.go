@@ -590,7 +590,7 @@ func (g *Module) setOutputFiles(ctx android.ModuleContext) {
 
 // Part of android.IDEInfo.
 // Collect information for opening IDE project files in java/jdeps.go.
-func (g *Module) IDEInfo(dpInfo *android.IdeInfo) {
+func (g *Module) IDEInfo(ctx android.BaseModuleContext, dpInfo *android.IdeInfo) {
 	dpInfo.Srcs = append(dpInfo.Srcs, g.Srcs().Strings()...)
 	for _, src := range g.properties.Srcs {
 		if strings.HasPrefix(src, ":") {
@@ -600,6 +600,8 @@ func (g *Module) IDEInfo(dpInfo *android.IdeInfo) {
 	}
 	dpInfo.Paths = append(dpInfo.Paths, g.modulePaths...)
 }
+
+var _ android.IDEInfo = (*Module)(nil)
 
 // Ensure Module implements android.ApexModule
 // Note: gensrcs implements it but it's possible we do not actually need to.
