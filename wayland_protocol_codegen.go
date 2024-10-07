@@ -72,7 +72,6 @@ import (
 	"strings"
 
 	"github.com/google/blueprint"
-	"github.com/google/blueprint/bootstrap"
 	"github.com/google/blueprint/proptools"
 
 	"android/soong/android"
@@ -294,16 +293,11 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 	if len(g.properties.Tools) > 0 {
 		seenTools := make(map[string]bool)
 
-		ctx.VisitDirectDepsBlueprint(func(module blueprint.Module) {
+		ctx.VisitDirectDepsAllowDisabled(func(module android.Module) {
 			switch tag := ctx.OtherModuleDependencyTag(module).(type) {
 			case hostToolDependencyTag:
 				tool := ctx.OtherModuleName(module)
-				if m, ok := module.(android.Module); ok {
-					// Necessary to retrieve any prebuilt replacement for the tool, since
-					// toolDepsMutator runs too late for the prebuilt mutators to have
-					// replaced the dependency.
-					module = android.PrebuiltGetPreferred(ctx, m)
-				}
+				module = android.PrebuiltGetPreferred(ctx, module)
 
 				switch t := module.(type) {
 				case android.HostToolProvider:
@@ -322,7 +316,8 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 						ctx.ModuleErrorf("host tool %q missing output file", tool)
 						return
 					}
-					if specs := t.TransitivePackagingSpecs(); specs != nil {
+					if specs := android.OtherModuleProviderOrDefault(
+						ctx, t, android.InstallFilesProvider).TransitivePackagingSpecs.ToList(); specs != nil {
 						// If the HostToolProvider has PackgingSpecs, which are definitions of the
 						// required relative locations of the tool and its dependencies, use those
 						// instead.  They will be copied to those relative locations in the sbox
@@ -334,11 +329,6 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 						tools = append(tools, path.Path())
 						addLocationLabel(tag.label, toolLocation{android.Paths{path.Path()}})
 					}
-				case bootstrap.GoBinaryTool:
-					// A GoBinaryTool provides the install path to a tool, which will be copied.
-					p := android.PathForGoBinary(ctx, t)
-					tools = append(tools, p)
-					addLocationLabel(tag.label, toolLocation{android.Paths{p}})
 				default:
 					ctx.ModuleErrorf("%q is not a host tool provider", tool)
 					return
@@ -589,7 +579,7 @@ func (g *Module) setOutputFiles(ctx android.ModuleContext) {
 
 // Part of android.IDEInfo.
 // Collect information for opening IDE project files in java/jdeps.go.
-func (g *Module) IDEInfo(dpInfo *android.IdeInfo) {
+func (g *Module) IDEInfo(ctx android.BaseModuleContext, dpInfo *android.IdeInfo) {
 	dpInfo.Srcs = append(dpInfo.Srcs, g.Srcs().Strings()...)
 	for _, src := range g.properties.Srcs {
 		if strings.HasPrefix(src, ":") {
@@ -599,6 +589,8 @@ func (g *Module) IDEInfo(dpInfo *android.IdeInfo) {
 	}
 	dpInfo.Paths = append(dpInfo.Paths, g.modulePaths...)
 }
+
+var _ android.IDEInfo = (*Module)(nil)
 
 // Ensure Module implements android.ApexModule
 // Note: gensrcs implements it but it's possible we do not actually need to.
