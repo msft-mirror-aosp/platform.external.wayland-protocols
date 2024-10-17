@@ -88,7 +88,7 @@ func registerCodeGenBuildComponents(ctx android.RegistrationContext) {
 	ctx.RegisterModuleType("wayland_protocol_codegen", codegenFactory)
 
 	ctx.FinalDepsMutators(func(ctx android.RegisterMutatorsContext) {
-		ctx.BottomUp("wayland_protocol_codegen_tool_deps", toolDepsMutator).Parallel()
+		ctx.BottomUp("wayland_protocol_codegen_tool_deps", toolDepsMutator)
 	})
 }
 
