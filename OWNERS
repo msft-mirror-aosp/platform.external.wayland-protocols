@@ -12,3 +12,4 @@ xutan@google.com #{LAST_RESORT_SUGGESTION}
 
 # Allow Soong team to make build changes
 per-file bazel/*,Android.bp,*.go,go.mod,go.work,go.work.sum = file:platform/build/soong:/OWNERS #{LAST_RESORT_SUGGESTION}
+include platform/system/core:/janitors/OWNERS #{LAST_RESORT_SUGGESTION}
