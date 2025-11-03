@@ -98,10 +98,11 @@ var (
 	// Used by wayland_protocol_codegen when there is more than 1 shard to merge the outputs
 	// of each shard into a zip file.
 	gensrcsMerge = pctx.AndroidStaticRule("wayland_protocol_codegenMerge", blueprint.RuleParams{
-		Command:        "${soongZip} -o ${tmpZip} @${tmpZip}.rsp && ${zipSync} -d ${genDir} ${tmpZip}",
-		CommandDeps:    []string{"${soongZip}", "${zipSync}"},
-		Rspfile:        "${tmpZip}.rsp",
-		RspfileContent: "${zipArgs}",
+		Command:         "${soongZip} -o ${tmpZip} @${tmpZip}.rsp && ${zipSync} -d ${genDir} ${tmpZip}",
+		CommandDeps:     []string{"${soongZip}", "${zipSync}"},
+		Rspfile:         "${tmpZip}.rsp",
+		RspfileContent:  "${zipArgs}",
+		SandboxDisabled: true,
 	}, "tmpZip", "genDir", "zipArgs")
 )
 
@@ -438,6 +439,7 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 
 		// Use a RuleBuilder to create a rule that runs the command inside an sbox sandbox.
 		rule := android.NewRuleBuilder(pctx, ctx).Sbox(task.genDir, manifestPath).SandboxTools()
+		rule.SandboxDisabled()
 		cmd := rule.Command()
 
 		for _, out := range task.out {
@@ -701,6 +703,7 @@ func newCodegen() *Module {
 			// rule.Command().PathForOutput.  Replace this with passing the rule into the
 			// generator.
 			rule := android.NewRuleBuilder(pctx, ctx).Sbox(genDir, nil).SandboxTools()
+			rule.SandboxDisabled()
 
 			for _, in := range shard {
 				outFileRaw := expandOutputPath(ctx, *properties, in)
