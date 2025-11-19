@@ -300,32 +300,19 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 	if len(g.properties.Tools) > 0 {
 		seenTools := make(map[string]bool)
 
-		ctx.VisitDirectDepsProxyAllowDisabled(func(proxy android.ModuleProxy) {
-			switch tag := ctx.OtherModuleDependencyTag(proxy).(type) {
+		ctx.VisitDirectDepsProxyAllowDisabled(func(module android.ModuleProxy) {
+			switch tag := ctx.OtherModuleDependencyTag(module).(type) {
 			case hostToolDependencyTag:
-				// Necessary to retrieve any prebuilt replacement for the tool, since
-				// toolDepsMutator runs too late for the prebuilt mutators to have
-				// replaced the dependency.
-				module := android.PrebuiltGetPreferred(ctx, proxy)
 				tool := ctx.OtherModuleName(module)
-				if h := android.GetHostToolProvider(ctx, module); h != nil {
+				if h := android.GetHostToolInfo(ctx, module); h != nil {
 					// A HostToolProvider provides the path to a tool, which will be copied
 					// into the sandbox.
-					commonInfo := android.OtherModulePointerProviderOrDefault(ctx, module, android.CommonModuleInfoProvider)
-					if !commonInfo.Enabled {
-						if ctx.Config().AllowMissingDependencies() {
-							ctx.AddMissingDependencies([]string{tool})
-						} else {
-							ctx.ModuleErrorf("depends on disabled module %q", tool)
-						}
-						return
-					}
 					path := h.HostToolPath
 					if !path.Valid() {
 						ctx.ModuleErrorf("host tool %q missing output file", tool)
 						return
 					}
-					if specs := android.GetInstallFilesCommon(commonInfo).TransitivePackagingSpecs.ToList(); specs != nil {
+					if specs := h.TransitivePackagingSpecs.ToList(); specs != nil {
 						// If the HostToolProvider has PackgingSpecs, which are definitions of the
 						// required relative locations of the tool and its dependencies, use those
 						// instead.  They will be copied to those relative locations in the sbox
@@ -348,14 +335,17 @@ func (g *Module) generateCommonBuildActions(ctx android.ModuleContext) {
 						addLocationLabel(tag.label, toolLocation{android.Paths{path.Path()}})
 					}
 				} else {
-					ctx.ModuleErrorf("%q is not a host tool provider", tool)
+					if ctx.Config().AllowMissingDependencies() {
+						ctx.AddMissingDependencies([]string{tool})
+					} else {
+						ctx.ModuleErrorf("%q is not a host tool provider", tool)
+					}
 					return
 				}
 
 				seenTools[tag.label] = true
 			}
 		})
-
 		// If AllowMissingDependencies is enabled, the build will not have stopped when
 		// AddFarVariationDependencies was called on a missing tool, which will result in nonsensical
 		// "cmd: unknown location label ..." errors later.  Add a placeholder file to the local label.
