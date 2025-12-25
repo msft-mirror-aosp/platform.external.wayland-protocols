@@ -40,27 +40,6 @@ license {
     license_text: ["BSD_LICENSE.txt"],
 }
 
-// Build and use the "wayland_protocol_codegen" extension. This is just a bit
-// of glue code to invoke the wayland-scanner code generation tool provided by
-// the core Wayland code (external/wayland) from the Android build system.
-bootstrap_go_package {
-    name: "soong-wayland-protocol-codegen",
-    // licenses: ["Android-Apache-2.0"],
-    pkgPath: "android/soong/external/wayland-protocol",
-    deps: [
-        "blueprint",
-        "blueprint-proptools",
-        "soong-android",
-        "soong-genrule",
-    ],
-    srcs: [
-        "locations.go",
-        "wayland_protocol_codegen.go",
-    ],
-    testSrcs: ["wayland_protocol_codegen_test.go"],
-    pluginFor: ["soong_build"],
-}
-
 // All the MIT licensed freedesktop.org defined extension protocols.
 filegroup {
     name: "freedesktop.org-MIT-wayland_extension_protocols",
@@ -164,7 +143,7 @@ filegroup {
 }
 
 // Common settings for processing these protocols
-wayland_protocol_codegen_defaults {
+genrule_defaults {
     name: "wayland_extension_protocol_defaults",
 
     // All the protocol files to generate code for.
@@ -175,7 +154,7 @@ wayland_protocol_codegen_defaults {
 }
 
 // Generate protocol source files used by both client and server
-wayland_protocol_codegen {
+gensrcs {
     name: "wayland_extension_protocol_sources",
     defaults: ["wayland_extension_protocol_defaults"],
 
@@ -186,11 +165,11 @@ wayland_protocol_codegen {
     // The output filename should use the base filename of the protocol file (no extension), and
     // add a ".c" suffix. For example, "freedesktop.org/stable/xdg-shell/xdg-shell.xml" generates
     // "xdg-shell.c".
-    output: "$(in).c",
+    output: "$(in:base).c",
 }
 
 // Generate protocol header files used by the client
-wayland_protocol_codegen {
+gensrcs {
     name: "wayland_extension_client_protocol_headers",
     defaults: ["wayland_extension_protocol_defaults"],
 
@@ -201,11 +180,11 @@ wayland_protocol_codegen {
     // The output filename should use the base filename of the protocol file (no extension), and
     // add a "-client-protocol.h" suffix. For example,
     // "freedesktop.org/stable/xdg-shell/xdg-shell.xml" generates "xdg-shell-client-protocol.h".
-    output: "$(in)-client-protocol.h",
+    output: "$(in:base)-client-protocol.h",
 }
 
 // Generate protocol header files used by the server
-wayland_protocol_codegen {
+gensrcs {
     name: "wayland_extension_server_protocol_headers",
     defaults: ["wayland_extension_protocol_defaults"],
 
@@ -216,7 +195,7 @@ wayland_protocol_codegen {
     // The output filename should use the base filename of the protocol file (no extension), and
     // add a "-server-protocol.h" suffix. For example,
     // "freedesktop.org/stable/xdg-shell/xdg-shell.xml" generates "xdg-shell-server-protocol.h".
-    output: "$(in)-server-protocol.h",
+    output: "$(in:base)-server-protocol.h",
 }
 
 // Generate a library with the protocol files, configured to export the client
